@@ -15,6 +15,9 @@ config_section = ""
 
 def main():
     config = getConfig()
+    print("===================")
+    print("## config section : {}".format(config_section))
+    print("===================")
     reserv = Reservation(
         config.getint(config_section, "loop_count")
         ,config.get(config_section, "login_id")

@@ -20,17 +20,18 @@ class Reservation:
                  login_id, login_pw, 
                  reserve_month, reserve_days, seat_nominees,
                  percent_str, birth_ymd, bank_name):
+        
         self.loop_count = loop_count
         self.login_id = login_id
         self.login_pw = login_pw
         self.reserve_month = reserve_month
-        print("reserve_month : ",reserve_month)
         self.reserve_date = datetime.strptime(self.reserve_month, "%Y년 %m월")
         self.reserve_days = reserve_days
         self.seat_nominees = seat_nominees
         self.percent_str = percent_str
         self.birth_ymd = birth_ymd
         self.bank_name = bank_name
+        print("Setting Data : \n{}".format(" \n".join(["<< {} = {} >>".format(mem_var, getattr(self, mem_var)) for mem_var in dir(self) if not mem_var.startswith('__') and not callable(getattr(self, mem_var))])))
         
         print("START...")
         self.driver = webdriver.Chrome()
@@ -91,14 +92,12 @@ class Reservation:
                 print("캠핑 자리 : {}".format(sn))
                 seat.click()
                 
-                ## 테스트용 코드 - 원하는 시간이 될때까지 기다림
-#                 while time.gmtime().tm_sec != 55:
-#                     print("기다림........")
-#                     time.sleep(0.2)
-                
+#                 # 테스트용 코드 - 원하는 시간이 될때까지 기다림
+#                  while time.gmtime().tm_sec != 55:
+#                      print("기다림........")
+#                      time.sleep(0.2)
                 
                 self.driver.find_element_by_class_name("btn_next_step").click()
-                
                 # "다음" 버튼 클릭시 Alert창이 발생하면 Accept 처리 하고 다음 자리로 넘어가도록 처리
                 try:
                     alert = self.driver.switch_to.alert
@@ -152,11 +151,10 @@ class Reservation:
     
     
     def process_reservation(self):
-        
         # 인터파크 티켓 페이지로 이동
         self.driver.get("http://ticket.interpark.com/?smid1=header&smid2=ticket")
         self.login(self.login_id, self.login_pw)
-        time.sleep(0.5)
+        time.sleep(0.2)
         
         
         ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭 
@@ -182,7 +180,7 @@ class Reservation:
             idx+=1
             
             for rd, rdur in self.reserve_days.items():
-                
+                print("-----------------------------------------------------------------------")
                 booking_b = self.driver.find_element_by_class_name("btn_booking")
                 booking_b.click()
             
@@ -196,7 +194,7 @@ class Reservation:
                 while not is_possible:
                     print("is_possible = {}".format(is_possible))
                    
-                    time.sleep(0.5)
+#                     time.sleep(0.5)
                     is_correct_month = False
                     while not is_correct_month:
                         current_month = self.driver.find_element_by_xpath("//*[@id='BookingDateTime']/h3").text
@@ -224,7 +222,7 @@ class Reservation:
                             # 정보 입력 및 결제 수단 
                             self.input_payment_info()
                             # 결제 완료
-    #                         self.payment_complete()
+                            self.payment_complete()
                         else:
                             print("{} 자리가 하나도 없거나 이미 예를 했음".format(self.seat_nominees))
                         # popup을 닫고 예매하기 버튼을 다시 클릭하기 위해 메인 윈도우로 이동함
