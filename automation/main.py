@@ -16,7 +16,8 @@ config_section = ""
 def main():
     config = getConfig()
     reserv = Reservation(
-        config.get(config_section, "login_id")
+        config.getint(config_section, "loop_count")
+        ,config.get(config_section, "login_id")
         ,config.get(config_section, "login_pw")
         ,config.get(config_section, "reserve_month")
         ,literal_eval(config.get(config_section, "reserve_days"))
