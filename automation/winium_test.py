@@ -62,12 +62,13 @@ mw_btn.click()
 mw_win = None
 while mw_win is None:
     try:
-        driver.find_element_by_name('MirageWorks2')
+        mw_win = driver.find_element_by_name('MirageWorks2')
     except:
-         print("Exception : {}".format(sys.exc_info()[0]))
-    time.sleep(0.5)
+         print('Exception : {}'.format(sys.exc_info()[0]))
+    print('mw_win : {}'.format(mw_win))
+    time.sleep(1)
      
-mw_win.find_element_by_xpath('./*[6]/*[1]/*[4]').send_keys('aaaaaaaaaaa')
+mw_win.find_element_by_xpath('./*[5]/*[1]/*[4]').send_keys('aaaaaaaaaaa')
 
 time.sleep(2)
 
