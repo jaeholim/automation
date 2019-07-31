@@ -34,7 +34,12 @@ class Reservation:
         print("Setting Data : \n{}".format(" \n".join(["<< {} = {} >>".format(mem_var, getattr(self, mem_var)) for mem_var in dir(self) if not mem_var.startswith('__') and not callable(getattr(self, mem_var))])))
         
         print("START...")
-        self.driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+#         options.add_argument('headless')
+#         options.add_argument('window-size=1920x1080')
+#         options.add_argument("disable-gpu")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36")
+        self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.maximize_window()
         self.main_window_handler = self.driver.current_window_handle
         self.popup_handler = None
@@ -47,9 +52,12 @@ class Reservation:
     # 로그인 처리
     def login(self, uid, upw):
         self.driver.find_element_by_id("imgLogin").click()
-        self.driver.find_element_by_id("UID").send_keys(uid)
-        self.driver.find_element_by_id("PWD").send_keys(upw)
-        self.driver.find_element_by_class_name('loginBtn').find_element_by_tag_name("button").click()
+        iframe = self.driver.find_element_by_xpath("//iframe[@title='login']")
+        self.driver.switch_to_frame(iframe)
+        self.driver.find_element_by_id("userId").send_keys(uid)
+        self.driver.find_element_by_id("userPwd").send_keys(upw)
+        self.driver.find_element_by_id('btn_login').click()
+        self.driver.switch_to.window(self.main_window_handler)
         print("로그인 완료 : {}".format(uid))
         return None
     
@@ -161,15 +169,18 @@ class Reservation:
         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5")
         
         # 예약 페이로 이동
-        info_dates = self.driver.find_elements_by_xpath("//*[@id='play_list']/*/td[@class='info_Date']")
-        idx = 1
-        for info_date in info_dates:
-            print("Row Num : {}, available date : {}".format(idx, info_date.text))
-            sdate, edate = info_date.text.split("~")
-            if datetime.strptime(sdate.strip(), "%Y.%m.%d") <= self.reserve_date and self.reserve_date <= datetime.strptime(edate.strip(), "%Y.%m.%d"):
-                self.driver.find_element_by_xpath("//*[@id='play_list']/tr[{}]/td[@class='btnArea']/a[1]".format(idx)).click()
-                break
-            idx+=1
+        if self.driver.find_element_by_id("tickettype1_result").is_displayed():
+            self.driver.find_element_by_xpath('//*[@id="tickettype1_result"]/div/div/div[3]/a[1]/img').click()
+        else:            
+            info_dates = self.driver.find_elements_by_xpath("//*[@id='play_list']/*/td[@class='info_Date']")
+            idx = 1
+            for info_date in info_dates:
+                print("Row Num : {}, available date : {}".format(idx, info_date.text))
+                sdate, edate = info_date.text.split("~")
+                if datetime.strptime(sdate.strip(), "%Y.%m.%d") <= self.reserve_date and self.reserve_date <= datetime.strptime(edate.strip(), "%Y.%m.%d"):
+                    self.driver.find_element_by_xpath("//*[@id='play_list']/tr[{}]/td[@class='btnArea']/a[1]".format(idx)).click()
+                    break
+                idx+=1
         
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
@@ -186,49 +197,56 @@ class Reservation:
             
                 print("window handlers : {}".format(self.driver.window_handles))
             
-                # 예약을 위한 popup        
-                self.popup_handler = self.get_popup_handler()
-                self.driver.switch_to.window(self.popup_handler)
-            
-                is_possible = False
-                while not is_possible:
-                    print("is_possible = {}".format(is_possible))
-                   
-#                     time.sleep(0.5)
-                    is_correct_month = False
-                    while not is_correct_month:
-                        current_month = self.driver.find_element_by_xpath("//*[@id='BookingDateTime']/h3").text
-                        if current_month == self.reserve_month:
-                            is_correct_month = True
-                        else:
-                            # 다음달 선택
-                            self.driver.find_element_by_class_name("btn_next").click()
-                            # 다음달 선택후 데이터를 바로 읽으면 데이터를 잘못읽어서 0.5초 쉼
-                            time.sleep(0.5)
-                        print("month : {}, is_correct_month : {}".format(current_month, is_correct_month))            
+                try:
+                    # 예약을 위한 popup        
+                    self.popup_handler = self.get_popup_handler()
+                    self.driver.switch_to.window(self.popup_handler)
+                
+                    is_possible = False
+                    while not is_possible:
+                        print("is_possible = {}".format(is_possible))
+                       
+    #                     time.sleep(0.5)
+                        is_correct_month = False
+                        while not is_correct_month:
+                            current_month = self.driver.find_element_by_xpath("//*[@id='BookingDateTime']/h3").text
+                            if current_month == self.reserve_month:
+                                is_correct_month = True
+                            else:
+                                # 다음달 선택
+                                self.driver.find_element_by_class_name("btn_next").click()
+                                # 다음달 선택후 데이터를 바로 읽으면 데이터를 잘못읽어서 0.5초 쉼
+                                time.sleep(0.5)
+                            print("month : {}, is_correct_month : {}".format(current_month, is_correct_month))            
+                            
+                        # 링크가 존재 하는지 확인
+                        possible_links = self.driver.find_elements_by_id("CellPlayDate")
+                        print("possible_links len : {}".format(len(possible_links)))
                         
-                    # 링크가 존재 하는지 확인
-                    possible_links = self.driver.find_elements_by_id("CellPlayDate")
-                    print("possible_links len : {}".format(len(possible_links)))
-                    
-                    # 링크가 존재 하면 원하는 날짜를 선택 
-                    if len(possible_links) > 0:
-                        # 예매가 가능
-                        is_possible = True
-                        # 날짜 자리 선택
-                        if self.date_seat_select(rd, rdur):
-                            # 가격 선택
-                            self.price_select()
-                            # 정보 입력 및 결제 수단 
-                            self.input_payment_info()
-                            # 결제 완료
-                            self.payment_complete()
+                        # 링크가 존재 하면 원하는 날짜를 선택 
+                        if len(possible_links) > 0:
+                            # 예매가 가능
+                            is_possible = True
+                            # 날짜 자리 선택
+                            if self.date_seat_select(rd, rdur):
+                                # 가격 선택
+                                self.price_select()
+                                # 정보 입력 및 결제 수단 
+                                self.input_payment_info()
+                                # 결제 완료
+                                self.payment_complete()
+                            else:
+                                print("{} 자리가 하나도 없거나 이미 예를 했음".format(self.seat_nominees))
+                            # popup을 닫고 예매하기 버튼을 다시 클릭하기 위해 메인 윈도우로 이동함
+                            self.driver.close()
+                            self.driver.switch_to.window(self.main_window_handler)
                         else:
-                            print("{} 자리가 하나도 없거나 이미 예를 했음".format(self.seat_nominees))
-                        # popup을 닫고 예매하기 버튼을 다시 클릭하기 위해 메인 윈도우로 이동함
+                            print("refrsh....................")
+                            self.driver.refresh()
+                except Exception:
+                    print("예매 중 에러 발생 하여 팝업창 부터 다시 시작...")
+                    try:
                         self.driver.close()
-                        self.driver.switch_to.window(self.main_window_handler)
-                    else:
-                        print("refrsh....................")
-                        self.driver.refresh()
-
+                    except Exception:
+                        print('[예외]...이미 팝업은 닫혀 있음 ')
+                    self.driver.switch_to.window(self.main_window_handler)
