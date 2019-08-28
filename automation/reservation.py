@@ -16,11 +16,12 @@ from selenium.common.exceptions import NoSuchElementException,\
 class Reservation:
 
     def __init__(self,
+                 section,
                  loop_count,
                  login_id, login_pw, 
                  reserve_month, reserve_days, seat_nominees,
-                 percent_str, birth_ymd, bank_name):
-        
+                 percent_str, birth_ymd, bank_name, user_agent):
+        self.section = section
         self.loop_count = loop_count
         self.login_id = login_id
         self.login_pw = login_pw
@@ -31,6 +32,7 @@ class Reservation:
         self.percent_str = percent_str
         self.birth_ymd = birth_ymd
         self.bank_name = bank_name
+        self.user_agent = user_agent
         print("Setting Data : \n{}".format(" \n".join(["<< {} = {} >>".format(mem_var, getattr(self, mem_var)) for mem_var in dir(self) if not mem_var.startswith('__') and not callable(getattr(self, mem_var))])))
         
         print("START...")
@@ -38,7 +40,7 @@ class Reservation:
 #         options.add_argument('headless')
 #         options.add_argument('window-size=1920x1080')
 #         options.add_argument("disable-gpu")
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36")
+        options.add_argument("user-agent=%s"%self.user_agent)
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.maximize_window()
         self.main_window_handler = self.driver.current_window_handle
