@@ -184,6 +184,12 @@ class Reservation:
                     break
                 idx+=1
         
+        # 테스트용 코드 - 원하는 시간이 될때까지 기다림
+        wait_datetime = datetime.strptime("2020-03-01 12:59:50", "%Y-%m-%d %H:%M:%S")
+        while datetime.now() <= wait_datetime:
+            print("기다림........{} - {}".format(datetime.now(), wait_datetime))
+            time.sleep(1)
+        
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
         while self.loop_count <= 0 or ( self.loop_count > 0 and idx <= self.loop_count):
