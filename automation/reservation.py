@@ -185,7 +185,7 @@ class Reservation:
                 idx+=1
         
         # 테스트용 코드 - 원하는 시간이 될때까지 기다림
-        wait_datetime = datetime.strptime("2020-03-01 12:59:50", "%Y-%m-%d %H:%M:%S")
+        wait_datetime = datetime.strptime("2020-02-01 12:59:50", "%Y-%m-%d %H:%M:%S")
         while datetime.now() <= wait_datetime:
             print("기다림........{} - {}".format(datetime.now(), wait_datetime))
             time.sleep(1)
@@ -241,10 +241,13 @@ class Reservation:
                                 self.price_select()
                                 # 정보 입력 및 결제 수단 
                                 self.input_payment_info()
+                                time.sleep(1000)    
                                 # 결제 완료
                                 self.payment_complete()
+                                
                             else:
                                 print("{} 자리가 하나도 없거나 이미 예를 했음".format(self.seat_nominees))
+                            time.sleep(10)    
                             # popup을 닫고 예매하기 버튼을 다시 클릭하기 위해 메인 윈도우로 이동함
                             self.driver.close()
                             self.driver.switch_to.window(self.main_window_handler)
