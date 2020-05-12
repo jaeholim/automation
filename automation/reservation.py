@@ -185,16 +185,20 @@ class Reservation:
                 idx+=1
         
         # 테스트용 코드 - 원하는 시간이 될때까지 기다림
-        wait_datetime = datetime.strptime("2020-02-01 12:59:50", "%Y-%m-%d %H:%M:%S")
+        wait_datetime = datetime.strptime("2020-05-12 12:59:50", "%Y-%m-%d %H:%M:%S")
+        refresh_idx = 1
         while datetime.now() <= wait_datetime:
-            print("기다림........{} - {}".format(datetime.now(), wait_datetime))
+            print("{} - 기다림........{} - {}".format(self.login_id, datetime.now(), wait_datetime))
+            if refresh_idx%10 == 0: 
+                self.driver.execute_script("location.reload()")
+            refresh_idx += 1
             time.sleep(1)
         
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
         while self.loop_count <= 0 or ( self.loop_count > 0 and idx <= self.loop_count):
             print("=======================================================================")
-            print("===== {}/{} 번째 시도 ".format(idx, "∞" if self.loop_count <= 0 else self.loop_count))
+            print("===== {} - {}/{} 번째 시도 ".format(self.login_id, idx, "∞" if self.loop_count <= 0 else self.loop_count))
             print("=======================================================================")
             idx+=1
             
