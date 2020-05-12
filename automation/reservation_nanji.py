@@ -19,7 +19,7 @@ class Reservation:
                  section,
                  loop_count,
                  login_id, login_pw, 
-                 reserve_month, reserve_days, seat_nominees,
+                 reserve_month, reserve_days, area, seat_nominees,
                  percent_str, birth_ymd, bank_name, user_agent):
         self.section = section
         self.loop_count = loop_count
@@ -28,6 +28,7 @@ class Reservation:
         self.reserve_month = reserve_month
         self.reserve_date = datetime.strptime(self.reserve_month, "%Y년 %m월")
         self.reserve_days = reserve_days
+        self.area = area
         self.seat_nominees = seat_nominees
         self.percent_str = percent_str
         self.birth_ymd = birth_ymd
@@ -96,8 +97,19 @@ class Reservation:
         
         # 자리 선택
         self.driver.switch_to.frame("ifrmSeat")
+        # 난지 캠핑장의 경우 구역을 먼저 선택 해야 함
+        if self.area != "none":
+            areas = self.driver.find_element_by_id("Map").find_elements_by_tag_name("area")
+            for area in areas:
+                print("area href : {}".format(area.get_property("href")))
+                if self.area in area.get_property("href"):
+                    # map 클릭시
+                    self.driver.execute_script("arguments[0].click();", area);
+                    break
+
         for sn in self.seat_nominees:
             try:
+                # 자리 선택
                 seat = self.driver.find_element_by_xpath("//*[contains(@title,'{}') and @class='stySeat']".format(sn))
                 print("캠핑 자리 : {}".format(sn))
                 seat.click()
@@ -130,8 +142,11 @@ class Reservation:
     def price_select(self):
         self.driver.switch_to.window(self.popup_handler)
         self.driver.switch_to.frame("ifrmBookStep")
-        self.driver.find_element_by_xpath("//*[@id='PriceType' and contains(@pricegradename,'{}')]".format(self.percent_str)).click() 
-        print("캠핑 할인율 : {}".format(self.percent_str))
+        if self.percent_str != "none":
+            self.driver.find_element_by_xpath("//*[@id='PriceType' and contains(@pricegradename,'{}')]".format(self.percent_str)).click() 
+            print("캠핑 할인율 : {}".format(self.percent_str))
+        else:
+            print("캠핑 할인없음 ")
         self.driver.find_element_by_id("NextStepImage").click()
         return None
     
@@ -164,11 +179,12 @@ class Reservation:
         # 인터파크 티켓 페이지로 이동
         self.driver.get("http://ticket.interpark.com/?smid1=header&smid2=ticket")
         self.login(self.login_id, self.login_pw)
-        time.sleep(0.2)
+        time.sleep(0.5)
         
         
-        ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭 
-        self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5")
+        ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭
+        self.driver.find_element_by_id("Nav_SearchWord").send_keys("난지캠핑장")
+        self.driver.find_element_by_class_name("btn_search").click()
         
         # 예약 페이로 이동
         if self.driver.find_element_by_id("tickettype1_result").is_displayed():
@@ -192,6 +208,7 @@ class Reservation:
         
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
+        time.sleep(1)
         while self.loop_count <= 0 or ( self.loop_count > 0 and idx <= self.loop_count):
             print("=======================================================================")
             print("===== {}/{} 번째 시도 ".format(idx, "∞" if self.loop_count <= 0 else self.loop_count))
@@ -210,6 +227,11 @@ class Reservation:
                     self.popup_handler = self.get_popup_handler()
                     self.driver.switch_to.window(self.popup_handler)
                 
+                    print("BookNotice display = {}".format(self.driver.find_element_by_id("divBookNotice").get_attribute("display")))
+
+                    if self.driver.find_element_by_id("divBookNotice").is_displayed():
+                        self.driver.find_element_by_id("divBookNotice").find_element_by_class_name("btn02").click()
+                    
                     is_possible = False
                     while not is_possible:
                         print("is_possible = {}".format(is_possible))
@@ -241,13 +263,13 @@ class Reservation:
                                 self.price_select()
                                 # 정보 입력 및 결제 수단 
                                 self.input_payment_info()
-                                time.sleep(0.5)    
+#                                 time.sleep(1000)    
                                 # 결제 완료
                                 self.payment_complete()
-                                time.sleep(0.5)
+                                
                             else:
                                 print("{} 자리가 하나도 없거나 이미 예를 했음".format(self.seat_nominees))
-                            time.sleep(1)    
+                            time.sleep(2)    
                             # popup을 닫고 예매하기 버튼을 다시 클릭하기 위해 메인 윈도우로 이동함
                             self.driver.close()
                             self.driver.switch_to.window(self.main_window_handler)
@@ -255,7 +277,7 @@ class Reservation:
                             print("refrsh....................")
                             self.driver.refresh()
                 except Exception:
-                    print("예매 중 에러 발생 하여 팝업창 부터 다시 시작...")
+                    print("예매 중 에러 발생 하여 팝업창 부터 다시 시작...{}".format())
                     try:
                         self.driver.close()
                     except Exception:
