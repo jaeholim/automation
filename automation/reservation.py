@@ -166,9 +166,10 @@ class Reservation:
         self.login(self.login_id, self.login_pw)
         time.sleep(0.2)
         
-        
+            
         ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭 
         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5")
+#         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%20%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5%20%285%uC6D4%7E%29")
         
         # 예약 페이로 이동
         if self.driver.find_element_by_id("tickettype1_result").is_displayed():
@@ -193,18 +194,27 @@ class Reservation:
                 self.driver.execute_script("location.reload()")
             refresh_idx += 1
             time.sleep(1)
-        
+
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
         while self.loop_count <= 0 or ( self.loop_count > 0 and idx <= self.loop_count):
             print("=======================================================================")
             print("===== {} - {}/{} 번째 시도 ".format(self.login_id, idx, "∞" if self.loop_count <= 0 else self.loop_count))
             print("=======================================================================")
-            idx+=1
+            idx+=1       
             
             for rd, rdur in self.reserve_days.items():
                 print("-----------------------------------------------------------------------")
-                booking_b = self.driver.find_element_by_class_name("btn_booking")
+                try:
+                    booking_b = self.driver.find_element_by_class_name("btn_booking")
+                except Exception:
+                    print("예매 버튼이 활성화 되지 않음...")
+                    self.driver.switch_to.window(self.main_window_handler)
+                    print("refrsh....................")
+                    self.driver.refresh()
+                    time.sleep(0.5)                    
+                    continue
+            
                 booking_b.click()
             
                 print("window handlers : {}".format(self.driver.window_handles))
