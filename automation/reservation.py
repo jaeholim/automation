@@ -41,7 +41,7 @@ class Reservation:
 #         options.add_argument('window-size=1920x1080')
 #         options.add_argument("disable-gpu")
         options.add_argument("user-agent=%s"%self.user_agent)
-        self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver = webdriver.Chrome(executable_path=r"C:\Users\hahaj\IdeaProjects\automation\venv\webdrive\chromedriver.exe",chrome_options=options)
         self.driver.maximize_window()
         self.main_window_handler = self.driver.current_window_handle
         self.popup_handler = None
@@ -167,24 +167,27 @@ class Reservation:
         time.sleep(0.2)
         
             
-        ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭 
-        self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5")
-#         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%20%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5%20%285%uC6D4%7E%29")
-        
-        # 예약 페이로 이동
-        if self.driver.find_element_by_id("tickettype1_result").is_displayed():
-            self.driver.find_element_by_xpath('//*[@id="tickettype1_result"]/div/div/div[3]/a[1]/img').click()
-        else:            
-            info_dates = self.driver.find_elements_by_xpath("//*[@id='play_list']/*/td[@class='info_Date']")
-            idx = 1
-            for info_date in info_dates:
-                print("Row Num : {}, available date : {}".format(idx, info_date.text))
-                sdate, edate = info_date.text.split("~")
-                if datetime.strptime(sdate.strip(), "%Y.%m.%d") <= self.reserve_date and self.reserve_date <= datetime.strptime(edate.strip(), "%Y.%m.%d"):
-                    self.driver.find_element_by_xpath("//*[@id='play_list']/tr[{}]/td[@class='btnArea']/a[1]".format(idx)).click()
-                    break
-                idx+=1
-        
+#         ## 검색하여 원하는 달을 예매 할 수 있는 링크 클릭
+#         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5")
+# #         self.driver.get("http://ticket.interpark.com/search/ticket.asp?search=%uC548%uC0B0%20%uD654%uB791%uC624%uD1A0%uCEA0%uD551%uC7A5%20%285%uC6D4%7E%29")
+#
+#         # 예약 페이로 이동
+#         if self.driver.find_element_by_id("tickettype1_result").is_displayed():
+#             self.driver.find_element_by_xpath('//*[@id="tickettype1_result"]/div/div/div[3]/a[1]/img').click()
+#         else:
+#             info_dates = self.driver.find_elements_by_xpath("//*[@id='play_list']/*/td[@class='info_Date']")
+#             idx = 1
+#             for info_date in info_dates:
+#                 print("Row Num : {}, available date : {}".format(idx, info_date.text))
+#                 sdate, edate = info_date.text.split("~")
+#                 if datetime.strptime(sdate.strip(), "%Y.%m.%d") <= self.reserve_date and self.reserve_date <= datetime.strptime(edate.strip(), "%Y.%m.%d"):
+#                     self.driver.find_element_by_xpath("//*[@id='play_list']/tr[{}]/td[@class='btnArea']/a[1]".format(idx)).click()
+#                     break
+#                 idx+=1
+
+
+        self.driver.get("https://tickets.interpark.com/goods/20004246")
+
         # 테스트용 코드 - 원하는 시간이 될때까지 기다림
         wait_datetime = datetime.strptime("2020-05-12 12:59:50", "%Y-%m-%d %H:%M:%S")
         refresh_idx = 1
@@ -206,7 +209,7 @@ class Reservation:
             for rd, rdur in self.reserve_days.items():
                 print("-----------------------------------------------------------------------")
                 try:
-                    booking_b = self.driver.find_element_by_class_name("btn_booking")
+                    booking_b = self.driver.find_element_by_class_name("sideBtnWrap").find_element_by_tag_name("a");
                 except Exception:
                     print("예매 버튼이 활성화 되지 않음...")
                     self.driver.switch_to.window(self.main_window_handler)
@@ -223,15 +226,24 @@ class Reservation:
                     # 예약을 위한 popup        
                     self.popup_handler = self.get_popup_handler()
                     self.driver.switch_to.window(self.popup_handler)
-                
+
+                    # 팝업이 활성화 되기 전에
+                    time.sleep(0.2)
+
+                    print("BookNotice display = {}".format(self.driver.find_element_by_id("divBookNotice")))
+
+                    if self.driver.find_element_by_id("divBookNotice").is_displayed():
+                        self.driver.find_element_by_id("divBookNotice").find_element_by_class_name("btn02").click()
+
                     is_possible = False
                     while not is_possible:
                         print("is_possible = {}".format(is_possible))
                        
-    #                     time.sleep(0.5)
+                        # time.sleep(0.2)
                         is_correct_month = False
                         while not is_correct_month:
-                            current_month = self.driver.find_element_by_xpath("//*[@id='BookingDateTime']/h3").text
+                            # current_month = self.driver.find_element_by_xpath("//*[@id='BookingDateTime']/h3").text
+                            current_month = self.driver.find_element_by_id("BookingDateTime").find_element_by_tag_name("h3").text
                             if current_month == self.reserve_month:
                                 is_correct_month = True
                             else:
@@ -268,8 +280,8 @@ class Reservation:
                         else:
                             print("refrsh....................")
                             self.driver.refresh()
-                except Exception:
-                    print("예매 중 에러 발생 하여 팝업창 부터 다시 시작...")
+                except Exception as e:
+                    print("예매 중 에러 발생 하여 팝업창 부터 다시 시작... : {}".format(e))
                     try:
                         self.driver.close()
                     except Exception:
