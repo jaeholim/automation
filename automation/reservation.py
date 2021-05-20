@@ -41,7 +41,7 @@ class Reservation:
 #         options.add_argument('window-size=1920x1080')
 #         options.add_argument("disable-gpu")
         options.add_argument("user-agent=%s"%self.user_agent)
-        self.driver = webdriver.Chrome(executable_path=r"C:\Users\hahaj\IdeaProjects\automation\venv\webdrive\chromedriver.exe",chrome_options=options)
+        self.driver = webdriver.Chrome(executable_path=r"C:\Users\user\IdeaProjects\automation\venv\webdrive\chromedriver.exe",chrome_options=options)
         self.driver.maximize_window()
         self.main_window_handler = self.driver.current_window_handle
         self.popup_handler = None
@@ -189,7 +189,7 @@ class Reservation:
         self.driver.get("https://tickets.interpark.com/goods/20004246")
 
         # 테스트용 코드 - 원하는 시간이 될때까지 기다림
-        wait_datetime = datetime.strptime("2020-05-12 12:59:50", "%Y-%m-%d %H:%M:%S")
+        wait_datetime = datetime.strptime("2021-05-20 12:59:50", "%Y-%m-%d %H:%M:%S")
         refresh_idx = 1
         while datetime.now() <= wait_datetime:
             print("{} - 기다림........{} - {}".format(self.login_id, datetime.now(), wait_datetime))
