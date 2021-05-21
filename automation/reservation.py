@@ -189,7 +189,8 @@ class Reservation:
         self.driver.get("https://tickets.interpark.com/goods/20004246")
 
         # 테스트용 코드 - 원하는 시간이 될때까지 기다림
-        wait_datetime = datetime.strptime("2021-05-20 12:59:50", "%Y-%m-%d %H:%M:%S")
+        wait_datetime = datetime.strptime("2021-05-21 23:59:50", "%Y-%m-%d %H:%M:%S")
+        # wait_datetime = datetime.strptime("2021-05-21 16:37:50", "%Y-%m-%d %H:%M:%S")
         refresh_idx = 1
         while datetime.now() <= wait_datetime:
             print("{} - 기다림........{} - {}".format(self.login_id, datetime.now(), wait_datetime))
@@ -200,12 +201,18 @@ class Reservation:
 
         # 예매 페이지를 여러번 재시도 할 수 있도록 처리 
         idx = 1
+        end_datetime = datetime.strptime("2021-05-22 01:00:00", "%Y-%m-%d %H:%M:%S")
+        # end_datetime = datetime.strptime("2021-05-21 16:38:00", "%Y-%m-%d %H:%M:%S")
         while self.loop_count <= 0 or ( self.loop_count > 0 and idx <= self.loop_count):
+            if datetime.now() > end_datetime:
+                print("{} - 시간이 되어 자동 종료........{} - {}".format(self.login_id, datetime.now(), end_datetime))
+                break;
+
             print("=======================================================================")
             print("===== {} - {}/{} 번째 시도 ".format(self.login_id, idx, "∞" if self.loop_count <= 0 else self.loop_count))
             print("=======================================================================")
             idx+=1       
-            
+
             for rd, rdur in self.reserve_days.items():
                 print("-----------------------------------------------------------------------")
                 try:
